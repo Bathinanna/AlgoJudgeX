@@ -1,0 +1,13 @@
+{
+  "name": "seed-questions",
+  "version": "1.0.0",
+  "description": "Script to seed the database with sample questions",
+  "main": "seedQuestions.js",
+  "scripts": {
+    "seed": "node scripts/seedQuestions.js"
+  },
+  "dependencies": {
+    "mongoose": "^8.14.2",
+    "dotenv": "^16.5.0"
+  }
+}
