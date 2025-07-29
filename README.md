@@ -41,6 +41,9 @@ AlgoJudgeX is a full-stack platform for coding practice, real-time contests, and
 - Multi-language support (C++, Java, Python, JavaScript)
 - Handles custom input, standard test cases, and edge cases
 
+- <img width="1508" height="824" alt="image" src="https://github.com/user-attachments/assets/179070e9-e604-4ca2-9236-4cdafd6e6a94" />
+
+
 ---
 ## 🚀 Quick Start
 
