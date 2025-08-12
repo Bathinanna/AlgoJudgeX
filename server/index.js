@@ -14,6 +14,7 @@ const questionRoutes = require("./routes/questionRoutes.js");
 const submissionRoutes = require("./routes/submissionRoutes");
 const problemRoutes = require("./routes/problemRoutes");
 const aiRoutes= require("./routes/ai.js")
+const themeRoutes = require("./routes/themeRoutes.js");
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const app = express();
 connectDB();
@@ -36,6 +37,7 @@ app.use("/api/questions", questionRoutes);
 app.use("/api/submissions", submissionRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/ai", aiRoutes)
+app.use("/api/theme", themeRoutes);
 
 //for test-case generation using python scripts
 // app.post("/api/generate-tests", async (req, res) => {

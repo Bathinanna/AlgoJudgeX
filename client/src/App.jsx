@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from './context/ThemeContext.jsx';
 import Layout from "./components/Layout.jsx";
 import Contests from "./pages/Contests.jsx";
 import Profile from "./pages/Profile.jsx";
@@ -29,6 +30,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
@@ -51,7 +53,8 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/verify-otp" element={<OTPVerificationPage />} />
         </Routes>
-      </BrowserRouter>
+  </BrowserRouter>
+  </ThemeProvider>
     </QueryClientProvider>
   );
 }

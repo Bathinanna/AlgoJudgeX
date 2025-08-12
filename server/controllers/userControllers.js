@@ -1,3 +1,22 @@
+// Remove profile picture
+const removeProfilePicture = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    if (user.profilePicture?.public_id) {
+      await deleteFromCloudinary(user.profilePicture.public_id);
+    }
+    user.profilePicture = { public_id: '', url: '' };
+    await user.save();
+    res.status(200).json({ message: 'Profile picture removed', profilePicture: user.profilePicture });
+  } catch (err) {
+    console.error('Error removing profile picture:', err);
+    res.status(500).json({ message: 'Failed to remove profile picture' });
+  }
+};
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -65,6 +84,7 @@ const registerUser = async (req, res) => {
     res.status(201).json({
       _id: user._id,
       email: user.email,
+  themePreference: user.themePreference,
       message: 'User registered successfully. Please verify your email with the OTP sent.'
     });
   } catch (err) {
@@ -119,6 +139,7 @@ const loginUser = async (req, res) => {
       username: user.username,
       email: user.email,
       role: user.role,
+  themePreference: user.themePreference,
       token: generateToken(user._id),
     });
   } catch (err) {
@@ -360,6 +381,28 @@ const resendOTP = async (req, res) => {
   }
 };
 
+// Update theme preference
+const updateThemePreference = async (req, res) => {
+  try {
+    const { userId, theme } = req.body;
+    if (!userId || !theme) {
+      return res.status(400).json({ message: 'userId and theme are required' });
+    }
+    if (!['light', 'dark'].includes(theme)) {
+      return res.status(400).json({ message: 'Invalid theme value' });
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.themePreference = theme;
+    await user.save();
+    res.json({ message: 'Theme updated', theme: user.themePreference });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = { 
   registerUser, 
   loginUser, 
@@ -369,5 +412,7 @@ module.exports = {
   forgotPassword, 
   resetPassword,
   verifyOTP,
-  resendOTP 
+  resendOTP, 
+  removeProfilePicture,
+  updateThemePreference
 };

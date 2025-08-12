@@ -9,7 +9,9 @@ const {
   forgotPassword,
   resetPassword,
   verifyOTP,
-  resendOTP
+  resendOTP,
+  removeProfilePicture
+  ,updateThemePreference
 } = require('../controllers/userControllers.js');
 const User = require('../models/userModel.js');
 const router = express.Router();
@@ -18,11 +20,13 @@ router.post('/register', registerUser);
 router.post('/login', loginUser);
 router.put('/profile/:id', updateUser);
 router.put('/profile-picture/:id', singleUpload, updateProfilePicture);
+router.delete('/profile-picture/:id', removeProfilePicture);
 router.get('/profile/:id', getUserProfile);
 
 // Email Verification Routes
 router.post('/verify-otp', verifyOTP);
 router.post('/resend-otp', resendOTP);
+router.post('/theme', updateThemePreference);
 
 // Password Reset Routes
 router.post('/forgot-password', forgotPassword);

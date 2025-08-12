@@ -22,7 +22,7 @@ const ResetPassword = () => {
 
     try {
       await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/reset-password/${token}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/reset-password/${token}`,
         { password }
       );
       toast.success('Password has been reset successfully! You can now log in.');

@@ -88,7 +88,7 @@ const AuthPage = () => {
       }
       
       // Normal login flow
-      const { token, _id, name, email, role } = res.data;
+  const { token, _id, name, email, role, themePreference } = res.data;
 
       localStorage.setItem("token", token);
       localStorage.setItem("userId", _id);
@@ -100,6 +100,10 @@ const AuthPage = () => {
       }
       
       localStorage.setItem("role", role);
+      if (themePreference) {
+        localStorage.setItem("theme", themePreference);
+        document.documentElement.classList.toggle('dark', themePreference === 'dark');
+      }
 
       // ✅ Trigger header update
       window.dispatchEvent(new Event("userStatusChanged"));

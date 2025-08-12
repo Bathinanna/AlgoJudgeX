@@ -16,23 +16,39 @@ const Profile = () => {
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Initialize authentication state to false
-    setIsAuthenticated(false);
+    // Check authentication whenever component mounts or when isAuthenticated changes
     fetchUserProfile();
   }, []);
+
+  // Separate effect to handle logout and redirect
+  useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      // If user is not authenticated and not loading, redirect to auth
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
+      const user = localStorage.getItem('user');
+      
+      if (!token || !userId || !user) {
+        navigate('/auth');
+      }
+    }
+  }, [isAuthenticated, loading, navigate]);
 
   const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
+      const user = localStorage.getItem('user');
       
-      if (!token || !userId) {
+      // Check for all required authentication data
+      if (!token || !userId || !user) {
         setIsAuthenticated(false);
         setLoading(false);
         return;
@@ -66,11 +82,29 @@ const Profile = () => {
   };
 
   const handleLogout = () => {
+    // Clear ALL authentication-related localStorage items
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
+    localStorage.removeItem('user');  // This is what Header checks for
+    localStorage.removeItem('role');
+    localStorage.removeItem('cfHandle');
+    localStorage.removeItem('lcHandle');
+    localStorage.removeItem('pendingVerificationUserId');
+    localStorage.removeItem('pendingVerificationEmail');
+    
+    // Clear all state
     setIsAuthenticated(false);
     setUser(null);
-    navigate('/auth');
+    setError('');
+    setSelectedFile(null);
+    setUploading(false);
+    setIsEditing(false);
+    
+    // Trigger global user status change event for Header
+    window.dispatchEvent(new Event("userStatusChanged"));
+    
+    // Force immediate redirect
+    navigate('/auth', { replace: true });
   };
 
   const handleSaveProfile = async () => {
@@ -110,21 +144,28 @@ const Profile = () => {
       const userId = localStorage.getItem('userId');
 
       const response = await axios.put(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/profile-picture/${userId}`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/profile-picture/${userId}`,
         formData,
         {
           headers: {
-            'Content-Type': 'multipart/form-data',
+            // Let the browser set the correct multipart boundary
             Authorization: `Bearer ${token}`,
           },
         }
       );
 
+      console.log('Upload response:', response.data);
+      
       setUser((prevUser) => ({
         ...prevUser,
         profilePicture: response.data.profilePicture,
       }));
       setSelectedFile(null);
+      
+      console.log('Updated user state with profilePicture:', response.data.profilePicture);
+      
+      // Ensure we have the latest data from server (in case of other fields updated)
+      fetchUserProfile();
     } catch (err) {
       console.error('Error uploading profile picture:', err);
       setError('Failed to upload profile picture');
@@ -147,6 +188,25 @@ const Profile = () => {
       ...editForm,
       skills: editForm.skills.filter(skill => skill !== skillToRemove)
     });
+  };
+
+  const handleRemovePicture = async () => {
+    if (!user?.profilePicture?.url || removing) return;
+    try {
+      setRemoving(true);
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/api/users/profile-picture/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(prev => ({ ...prev, profilePicture: { public_id: '', url: '' } }));
+      setSelectedFile(null);
+    } catch (err) {
+      console.error('Error removing profile picture:', err);
+      setError('Failed to remove profile picture');
+    } finally {
+      setRemoving(false);
+    }
   };
 
   if (loading) {
@@ -268,7 +328,7 @@ const Profile = () => {
                   variant="outline"
                   className="border-red-600 text-red-400 hover:bg-red-600/10 hover:text-red-300 transition-all duration-300"
                 >
-                  Logout (Test)
+                  Logout 
                 </Button>
               </>
             ) : (
@@ -300,11 +360,16 @@ const Profile = () => {
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center">
                   <div className="relative w-24 h-24 rounded-full bg-gradient-to-r from-[#00FFC6] to-[#4ecdc4] flex items-center justify-center border-2 border-[#00FFC6]/30 mb-4">
-                    {user.profilePicture && user.profilePicture.url ? (
+                    {user?.profilePicture?.url ? (
                       <img
                         src={user.profilePicture.url}
                         alt="Profile"
                         className="w-full h-full rounded-full object-cover"
+                        onError={(e) => {
+                          console.error('Image failed to load:', user.profilePicture.url);
+                          e.target.style.display = 'none';
+                        }}
+                        onLoad={() => console.log('Image loaded successfully:', user.profilePicture.url)}
                       />
                     ) : (
                       <User size={32} className="text-black" />
@@ -325,6 +390,17 @@ const Profile = () => {
                       >
                         {uploading ? 'Uploading...' : 'Upload Picture'}
                       </Button>
+                      {user?.profilePicture?.url && (
+                        <Button
+                          type="button"
+                          onClick={handleRemovePicture}
+                          disabled={removing}
+                          variant="outline"
+                          className="w-full mt-2 border-red-600 text-red-400 hover:bg-red-600/10 hover:text-red-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {removing ? 'Removing...' : 'Remove Current Picture'}
+                        </Button>
+                      )}
                     </div>
                   )}
 

@@ -1,18 +1,25 @@
 import { useState, useEffect } from "react";
+import { useTheme } from '@/context/ThemeContext.jsx';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Moon, Sun, Menu } from "lucide-react";
+import { Search, Menu } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
 
 export const Header = ({ toggleSidebar }) => {
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme } = useTheme(); // retained if future use; button removed
+  const darkMode = theme === 'dark';
   const [usernameInitials, setUsernameInitials] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const updateUserStatus = () => {
+    // Check for both token/userId (for API calls) AND user object (for display info)
+    const token = localStorage.getItem("token");
+    const userId = localStorage.getItem("userId");
     const user = localStorage.getItem("user");
-    if (user) {
+    
+    // User is authenticated if they have both token/userId AND user object
+    if (token && userId && user) {
       try {
         const parsed = JSON.parse(user);
         const username = parsed.username || parsed.name || "";
@@ -30,20 +37,13 @@ export const Header = ({ toggleSidebar }) => {
         console.warn("Failed to parse user from localStorage.");
       }
     }
+    
+    // If any authentication data is missing, user is not logged in
     setIsLoggedIn(false);
     setUsernameInitials(null);
   };
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("theme");
-    if (storedTheme === "dark") {
-      setDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else {
-      setDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    }
-
     updateUserStatus();
 
     window.addEventListener("userStatusChanged", updateUserStatus);
@@ -52,18 +52,22 @@ export const Header = ({ toggleSidebar }) => {
   }, []);
 
   const toggleDarkMode = () => {
-    setDarkMode((prev) => {
-      const newMode = !prev;
-      document.documentElement.classList.toggle("dark", newMode);
-      localStorage.setItem("theme", newMode ? "dark" : "light");
-      return newMode;
-    });
+    toggleTheme();
+    // backend persistence kept minimal; handled previously if needed
   };
 
   const handleLogout = () => {
+    // Clear ALL authentication-related localStorage items
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("role");
     localStorage.removeItem("cfHandle");
     localStorage.removeItem("lcHandle");
+    localStorage.removeItem("pendingVerificationUserId");
+    localStorage.removeItem("pendingVerificationEmail");
+    
+    // Trigger user status change
     window.dispatchEvent(new Event("userStatusChanged"));
   };
 
@@ -103,24 +107,7 @@ export const Header = ({ toggleSidebar }) => {
 
       {/* Right section */}
       <div className="flex items-center gap-4">
-        <Button
-          onClick={toggleDarkMode}
-          size="sm"
-          style={{
-            backgroundColor: "#31304D",
-            color: "#F0ECE5",
-            border: "none",
-          }}
-        >
-          {darkMode ? (
-            <Sun className="w-4 h-4" />
-          ) : (
-            <Moon className="w-4 h-4" />
-          )}
-          <span className="ml-1 text-sm hidden sm:inline">
-            {darkMode ? "Light Mode" : "Dark Mode"}
-          </span>
-        </Button>
+  {/* Theme toggle removed as requested */}
 
         {isLoggedIn ? (
           <div className="flex items-center gap-2">
@@ -133,29 +120,33 @@ export const Header = ({ toggleSidebar }) => {
               </AvatarFallback>
             </Avatar>
             <Button
-              size="sm"
-              onClick={handleLogout}
-              style={{
-                backgroundColor: "#31304D",
-                color: "#F0ECE5",
-                border: "none",
-              }}
-            >
-              Logout
-            </Button>
+                size="sm"
+                onClick={handleLogout}
+                className="group relative overflow-hidden transform-gpu hover:-translate-y-0.5 active:translate-y-0 hover:shadow-md hover:shadow-rose-500/25 focus-visible:ring-2 focus-visible:ring-rose-400/60 transition-all duration-300"
+                style={{
+                  backgroundColor: "#31304D",
+                  color: "#F0ECE5",
+                  border: "1px solid #444360"
+                }}
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-rose-500/0 via-rose-500/15 to-rose-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <span className="relative">Logout</span>
+              </Button>
           </div>
         ) : (
           <Link to="/auth">
             <Button
-              size="sm"
-              style={{
-                backgroundColor: "#31304D",
-                color: "#F0ECE5",
-                border: "none",
-              }}
-            >
-              Login
-            </Button>
+                size="sm"
+                className="group relative overflow-hidden transform-gpu hover:-translate-y-0.5 active:translate-y-0 hover:shadow-md hover:shadow-emerald-500/25 focus-visible:ring-2 focus-visible:ring-emerald-400/60 transition-all duration-300"
+                style={{
+                  backgroundColor: "#31304D",
+                  color: "#F0ECE5",
+                  border: "1px solid #444360"
+                }}
+              >
+                <span className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/15 to-emerald-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <span className="relative">Login</span>
+              </Button>
           </Link>
         )}
       </div>

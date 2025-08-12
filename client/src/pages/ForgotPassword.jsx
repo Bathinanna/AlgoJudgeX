@@ -14,7 +14,7 @@ const ForgotPassword = () => {
 
     try {
       const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/user/forgot-password`,
+        `${import.meta.env.VITE_BACKEND_URL}/api/users/forgot-password`,
         { email }
       );
       toast.success(data.message);
